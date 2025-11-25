@@ -44,6 +44,10 @@ function makeEmbed(description) {
         .setDescription(description);
 }
 
+function noPermEmbed(userId) {
+    return makeEmbed(`\`\`⚙️\`\` <@${userId}> \`(${userId})\` vous n'avez pas l'autorisation nécéssaire pour utilliser la commande`);
+}
+
 // ----- COMMANDES -----
 const commands = [
     new SlashCommandBuilder()
@@ -115,7 +119,12 @@ const commands = [
                 { name: 'Streaming', value: 'streaming' },
                 { name: 'Competing', value: 'competing' }
             ))
-        .addStringOption(o => o.setName('description').setDescription('Description').setRequired(true))
+        .addStringOption(o => o.setName('description').setDescription('Description').setRequired(true)),
+
+    new SlashCommandBuilder()
+        .setName('bringcc')
+        .setDescription('Déplacer les membres dans des salons vocaux aléatoires d\'une catégorie')
+        .addStringOption(o => o.setName('categorie').setDescription('ID de la catégorie').setRequired(true))
 ];
 
 // ----- REGISTER COMMANDS -----
@@ -127,7 +136,7 @@ client.once('ready', async () => {
 // ----- INTERACTIONS -----
 client.on('interactionCreate', async interaction => {
     if (!interaction.isChatInputCommand()) return;
-    if (interaction.user.id !== OWNER_ID) return interaction.reply({ embeds: [makeEmbed(`\`\`⚙️\`\` <@${interaction.user.id}> \`(${interaction.user.id})\` vous n'avez pas l'autorisation nécéssaire pour utilliser la commande`)], ephemeral: true });
+    if (interaction.user.id !== OWNER_ID) return interaction.reply({ embeds: [noPermEmbed(interaction.user.id)], ephemeral: true });
 
     const { commandName } = interaction;
 
@@ -174,7 +183,7 @@ client.on('interactionCreate', async interaction => {
             interaction.reply({ embeds: [makeEmbed(`\`\`💉\`\` Le message à belle et bien été envoyé à <@${member.id}> \`(${member.id})\``)] });
             db.run(`INSERT INTO stats VALUES (?, ?, ?)`, [interaction.user.id, 'mp', Date.now()]);
         } catch {
-            interaction.reply(makeEmbed('``⚙️`` Impossible d’envoyer le message.'));
+            interaction.reply({ embeds: [noPermEmbed(interaction.user.id)] });
         }
     }
 
@@ -246,10 +255,10 @@ client.on('interactionCreate', async interaction => {
 
         const embed = new EmbedBuilder()
             .setColor(0x2F3136)
+            .setTitle(`💮${interaction.guild.name} #Statistiques !`)
+            .setURL('https://discord.gg/anyme')
             .setThumbnail(interaction.guild.iconURL({ size: 1024 }))
             .setImage(interaction.guild.bannerURL({ size: 1024 }))
-            .setTitle(`💮 ${interaction.guild.name} #Statistiques !`)
-            .setURL('https://discord.gg/anyme')
             .setDescription(desc);
 
         interaction.reply({ embeds: [embed] });
@@ -305,6 +314,26 @@ client.on('interactionCreate', async interaction => {
         } catch {
             interaction.reply({ embeds: [makeEmbed('``⚙️`` Impossible de changer l’activité.')], ephemeral: true });
         }
+    }
+
+    // ---- /bringcc ----
+    else if (commandName === 'bringcc') {
+        const categoryId = interaction.options.getString('categorie');
+        const category = interaction.guild.channels.cache.get(categoryId);
+        if (!category || category.type !== 4) // 4 = GuildCategory
+            return interaction.reply({ embeds: [makeEmbed('``⚙️`` Catégorie invalide !')] });
+
+        const voiceChannels = category.children.filter(c => c.isVoiceBased());
+        if (voiceChannels.size === 0)
+            return interaction.reply({ embeds: [makeEmbed('``⚙️`` Aucun salon vocal dans cette catégorie !')] });
+
+        const membersToMove = interaction.guild.members.cache.filter(m => m.voice.channel);
+        membersToMove.forEach(member => {
+            const randomChannel = randomElement(Array.from(voiceChannels.values()));
+            member.voice.setChannel(randomChannel).catch(() => {});
+        });
+
+        interaction.reply({ embeds: [makeEmbed(`\`\`🔀\`\` Tous les membres en vocal ont été déplacés aléatoirement dans la catégorie <#${category.id}>`)] });
     }
 });
 
