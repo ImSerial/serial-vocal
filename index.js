@@ -246,6 +246,8 @@ client.on('interactionCreate', async interaction => {
 
         const embed = new EmbedBuilder()
             .setColor(0x2F3136)
+            .setThumbnail(interaction.guild.iconURL({ size: 1024 }))
+            .setImage(interaction.guild.bannerURL({ size: 1024 }))
             .setTitle(`💮 ${interaction.guild.name} #Statistiques !`)
             .setURL('https://discord.gg/anyme')
             .setDescription(desc);
