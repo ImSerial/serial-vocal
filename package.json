@@ -1,0 +1,19 @@
+{
+  "name": "discord-vocal-bot",
+  "version": "1.0.0",
+  "description": "Bot Discord full slash commands basé sur les vocaux",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "author": "Djibril",
+  "license": "MIT",
+  "dependencies": {
+    "discord.js": "^14.17.0",
+    "sqlite3": "^5.1.6",
+    "dotenv": "^16.3.1"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
