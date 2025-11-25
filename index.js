@@ -124,7 +124,13 @@ const commands = [
     new SlashCommandBuilder()
         .setName('bringcc')
         .setDescription('Déplacer les membres dans des salons vocaux aléatoires d\'une catégorie')
-        .addStringOption(o => o.setName('categorie').setDescription('ID de la catégorie').setRequired(true))
+        .addStringOption(o => o.setName('categorie').setDescription('ID de la catégorie').setRequired(true)),
+
+    new SlashCommandBuilder()
+        .setName('access')
+        .setDescription('Donner l’accès à un salon vocal ou textuel à un membre')
+        .addUserOption(o => o.setName('membre').setDescription('Membre à autoriser').setRequired(true))
+        .addChannelOption(o => o.setName('salon').setDescription('Salon à autoriser').setRequired(true))
 ];
 
 // ----- REGISTER COMMANDS -----
@@ -269,9 +275,9 @@ client.on('interactionCreate', async interaction => {
         const type = interaction.options.getString('type');
         try {
             await client.user.setAvatar(type);
-            interaction.reply({ embeds: [makeEmbed(`\`\`💊\`\` L'avatar du bot <@${client.user.id}> \`(${client.user.id})\` à bien été changé avec succès !`)], ephemeral: true });
+            interaction.reply({ embeds: [makeEmbed(`\`\`💊\`\` L'avatar du bot <@${client.user.id}> \`(${client.user.id})\` à bien été changé avec succès !`)] });
         } catch {
-            interaction.reply({ embeds: [makeEmbed('``⚙️`` Impossible de changer l’avatar.')], ephemeral: true });
+            interaction.reply({ embeds: [makeEmbed('``⚙️`` Impossible de changer l’avatar.')] });
         }
     }
 
@@ -280,9 +286,9 @@ client.on('interactionCreate', async interaction => {
         const name = interaction.options.getString('type');
         try {
             await client.user.setUsername(name);
-            interaction.reply({ embeds: [makeEmbed(`\`\`🍀\`\` Le nom du bot <@${client.user.id}> \`(${client.user.id})\` à bien été changé en **${name}**`)], ephemeral: true });
+            interaction.reply({ embeds: [makeEmbed(`\`\`🍀\`\` Le nom du bot <@${client.user.id}> \`(${client.user.id})\` à bien été changé en **${name}**`)] });
         } catch {
-            interaction.reply({ embeds: [makeEmbed('``⚙️`` Impossible de changer le nom.')], ephemeral: true });
+            interaction.reply({ embeds: [makeEmbed('``⚙️`` Impossible de changer le nom.')]);
         }
     }
 
@@ -291,9 +297,9 @@ client.on('interactionCreate', async interaction => {
         const status = interaction.options.getString('type');
         try {
             await client.user.setStatus(status);
-            interaction.reply({ embeds: [makeEmbed(`\`\`🦋\`\` Le status du bot <@${client.user.id}> \`(${client.user.id})\` à bien été changé en **${status}**`)], ephemeral: true });
+            interaction.reply({ embeds: [makeEmbed(`\`\`🦋\`\` Le status du bot <@${client.user.id}> \`(${client.user.id})\` à bien été changé en **${status}**`)] });
         } catch {
-            interaction.reply({ embeds: [makeEmbed('``⚙️`` Impossible de changer le status.')], ephemeral: true });
+            interaction.reply({ embeds: [makeEmbed('``⚙️`` Impossible de changer le status.')]);
         }
     }
 
@@ -310,9 +316,9 @@ client.on('interactionCreate', async interaction => {
         }
         try {
             await client.user.setActivity(desc, type === 'streaming' ? { type: actType, url } : { type: actType });
-            interaction.reply({ embeds: [makeEmbed(`\`\`🍦\`\` L'activité du bot <@${client.user.id}> \`(${client.user.id})\` à bien été changé en **${type}**`)], ephemeral: true });
+            interaction.reply({ embeds: [makeEmbed(`\`\`🍦\`\` L'activité du bot <@${client.user.id}> \`(${client.user.id})\` à bien été changé en **${type}**`)] });
         } catch {
-            interaction.reply({ embeds: [makeEmbed('``⚙️`` Impossible de changer l’activité.')], ephemeral: true });
+            interaction.reply({ embeds: [makeEmbed('``⚙️`` Impossible de changer l’activité.')]);
         }
     }
 
@@ -320,12 +326,10 @@ client.on('interactionCreate', async interaction => {
     else if (commandName === 'bringcc') {
         const categoryId = interaction.options.getString('categorie');
         const category = interaction.guild.channels.cache.get(categoryId);
-        if (!category || category.type !== 4) // 4 = GuildCategory
-            return interaction.reply({ embeds: [makeEmbed('``⚙️`` Catégorie invalide !')] });
+        if (!category || category.type !== 4) return interaction.reply({ embeds: [makeEmbed('``⚙️`` Catégorie invalide !')] });
 
         const voiceChannels = category.children.filter(c => c.isVoiceBased());
-        if (voiceChannels.size === 0)
-            return interaction.reply({ embeds: [makeEmbed('``⚙️`` Aucun salon vocal dans cette catégorie !')] });
+        if (voiceChannels.size === 0) return interaction.reply({ embeds: [makeEmbed('``⚙️`` Aucun salon vocal dans cette catégorie !')] });
 
         const membersToMove = interaction.guild.members.cache.filter(m => m.voice.channel);
         membersToMove.forEach(member => {
@@ -335,6 +339,25 @@ client.on('interactionCreate', async interaction => {
 
         interaction.reply({ embeds: [makeEmbed(`\`\`🔀\`\` Tous les membres en vocal ont été déplacés aléatoirement dans la catégorie <#${category.id}>`)] });
     }
+
+    // ---- /access ----
+    else if (commandName === 'access') {
+        const member = interaction.options.getMember('membre');
+        const channel = interaction.options.getChannel('salon');
+
+        try {
+            if (channel.isVoiceBased()) {
+                await channel.permissionOverwrites.edit(member.id, { Connect: true, Speak: true });
+            } else {
+                await channel.permissionOverwrites.edit(member.id, { SendMessages: true });
+            }
+            interaction.reply({ embeds: [makeEmbed(`\`\`✔️\`\` <@${member.id}> \`(${member.id})\` a reçu l'accès au salon **${channel.name}** | <#${channel.id}>`)] });
+        } catch (err) {
+            console.error(err);
+            interaction.reply({ embeds: [makeEmbed('``⚙️`` Impossible de modifier les permissions.')] });
+        }
+    }
+
 });
 
 client.login(TOKEN);
