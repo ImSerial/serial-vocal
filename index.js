@@ -288,7 +288,7 @@ client.on('interactionCreate', async interaction => {
             await client.user.setUsername(name);
             interaction.reply({ embeds: [makeEmbed(`\`\`🍀\`\` Le nom du bot <@${client.user.id}> \`(${client.user.id})\` à bien été changé en **${name}**`)] });
         } catch {
-            interaction.reply({ embeds: [makeEmbed('``⚙️`` Impossible de changer le nom.')]);
+            interaction.reply({ embeds: [makeEmbed('``⚙️`` Impossible de changer le nom.')]});
         }
     }
 
@@ -299,7 +299,7 @@ client.on('interactionCreate', async interaction => {
             await client.user.setStatus(status);
             interaction.reply({ embeds: [makeEmbed(`\`\`🦋\`\` Le status du bot <@${client.user.id}> \`(${client.user.id})\` à bien été changé en **${status}**`)] });
         } catch {
-            interaction.reply({ embeds: [makeEmbed('``⚙️`` Impossible de changer le status.')]);
+            interaction.reply({ embeds: [makeEmbed('``⚙️`` Impossible de changer le status.')]});
         }
     }
 
@@ -318,7 +318,7 @@ client.on('interactionCreate', async interaction => {
             await client.user.setActivity(desc, type === 'streaming' ? { type: actType, url } : { type: actType });
             interaction.reply({ embeds: [makeEmbed(`\`\`🍦\`\` L'activité du bot <@${client.user.id}> \`(${client.user.id})\` à bien été changé en **${type}**`)] });
         } catch {
-            interaction.reply({ embeds: [makeEmbed('``⚙️`` Impossible de changer l’activité.')]);
+            interaction.reply({ embeds: [makeEmbed('``⚙️`` Impossible de changer l’activité.')]});
         }
     }
 
