@@ -14,7 +14,7 @@ const sqlite3 = require('sqlite3').verbose();
 require('dotenv').config();
 
 const TOKEN = process.env.TOKEN;
-const OWNER_ID = process.env.OWNER_ID;
+const OWNER_IDS = process.env.OWNER_IDS.split(',').map(id => id.trim());
 
 // ----- SQLITE -----
 const db = new sqlite3.Database('./bot.db');
@@ -348,7 +348,7 @@ client.on('interactionCreate', async interaction => {
     if (!interaction.isChatInputCommand()) return;
 
     // uniform permission check (owner-only)
-    if (interaction.user.id !== OWNER_ID) return interaction.reply({ embeds: [noPermEmbed(interaction.user.id)], ephemeral: true });
+    if (!OWNER_IDS.includes(interaction.user.id)) return interaction.reply({ embeds: [noPermEmbed(interaction.user.id)], ephemeral: true });
 
     const { commandName } = interaction;
 
@@ -779,3 +779,4 @@ client.on('interactionCreate', async interaction => {
 
 // ----- LOGIN -----
 client.login(TOKEN);
+
